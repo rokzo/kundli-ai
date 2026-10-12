@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 import math
 
-st.set_page_config(page_title="Kundli AI | শাস্ত্রীয় কুষ্ঠি বিচার", page_icon="🕉️", layout="wide")
+st.set_page_config(page_title="Kundli AI | শাস্ত্রীয় কোষ্ঠী বিচার", page_icon="🕉️", layout="wide")
 
 st.markdown("""
 <style>
@@ -30,67 +30,103 @@ st.markdown("""
         padding: 16px;
         margin-bottom: 14px;
     }
+    .graha-card {
+        background: #14182e;
+        border-left: 5px solid #f4c66a;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border-top: 1px solid #282e50;
+        border-right: 1px solid #282e50;
+        border-bottom: 1px solid #282e50;
+    }
     .highlight-gold {
         color: #f4c66a;
         font-weight: 700;
     }
-    .source-tag {
-        font-size: 0.75rem;
-        background: #232946;
-        color: #eebbc3;
-        padding: 2px 7px;
-        border-radius: 4px;
-        border: 1px solid #394266;
-        display: inline-block;
-        margin-top: 4px;
-    }
     .remedy-box {
-        background: #181528;
-        border-left: 4px solid #f4a261;
+        background: #1b172a;
+        border: 1px dashed #f4a261;
         padding: 12px 14px;
         border-radius: 6px;
-        margin: 8px 0;
+        margin: 10px 0;
+    }
+    .ritual-box {
+        background: #112233;
+        border-left: 4px solid #2a9d8f;
+        padding: 10px 12px;
+        border-radius: 4px;
+        margin-top: 8px;
+    }
+    .badge {
+        display: inline-block;
+        background: #232946;
+        color: #eebbc3;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-right: 6px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🕉️ Kundli AI — শাস্ত্রীয় কোষ্ঠী ও সিদ্ধান্ত পঞ্জিকা</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Direct classical rule engine: Brihat Parashara Hora Shastra, Lal Kitab (1952), & Gupta Press Panjika</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🕉️ Kundli AI — শাস্ত্রীয় কোষ্ঠী ও প্রতিকার বিচার</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Classic Vedic Panchang, House Placements, Graha Phal & Traditional Remedial Rituals</div>', unsafe_allow_html=True)
 
+# ----------------- SIDEBAR INPUTS -----------------
 with st.sidebar:
-    st.markdown("### 📜 জন্ম তথ্য (Birth Information)")
-    dob = st.date_input("Date of Birth", datetime.date(2000, 1, 1), min_value=datetime.date(1920, 1, 1))
-    tob = st.time_input("Exact Birth Time", datetime.time(12, 0))
-    place = st.text_input("Birthplace", "Kolkata, West Bengal, India")
-    chart_view = st.selectbox("Chart Style", ["North Indian (Diamond)", "East Indian / Bengali (পূর্ব ভারতীয় ছক)"])
-    btn_calc = st.button("🔮 Calculate Source Chart", use_container_width=True)
+    st.markdown("### 📜 জন্ম তথ্য (Birth Details)")
+    dob = st.date_input("Date of Birth / জন্মতারিখ", datetime.date(2000, 1, 1), min_value=datetime.date(1920, 1, 1))
+    tob = st.time_input("Birth Time / সময়", datetime.time(12, 0))
+    place = st.text_input("Birthplace / জন্মস্থান", "Kolkata, West Bengal, India")
+    chart_view = st.selectbox("Chart Style / ছকের ধরন", ["North Indian (উত্তর ভারতীয় ছক)", "East Indian (পূর্ব ভারতীয়/বাঙালি ছক)"])
+    btn_calc = st.button("🔮 কোষ্ঠী বিচার ও প্রতিকার দেখুন", use_container_width=True)
 
-# ----------------- CANONICAL ASTROLOGICAL DATA -----------------
+# ----------------- ASTROLOGICAL MATRICES -----------------
 RASHIS = [
-    {"en": "Mesha (Aries)", "bn": "মেষ", "lord": "Mangala", "element": "Fire"},
-    {"en": "Vrishabha (Taurus)", "bn": "বৃষ", "lord": "Shukra", "element": "Earth"},
-    {"en": "Mithuna (Gemini)", "bn": "মিথুন", "lord": "Budha", "element": "Air"},
-    {"en": "Karka (Cancer)", "bn": "কর্কট", "lord": "Chandra", "element": "Water"},
-    {"en": "Simha (Leo)", "bn": "সিংহ", "lord": "Surya", "element": "Fire"},
-    {"en": "Kanya (Virgo)", "bn": "কন্যা", "lord": "Budha", "element": "Earth"},
-    {"en": "Tula (Libra)", "bn": "তুলা", "lord": "Shukra", "element": "Air"},
-    {"en": "Vrishchika (Scorpio)", "bn": "বৃশ্চিক", "lord": "Mangala", "element": "Water"},
-    {"en": "Dhanu (Sagittarius)", "bn": "ধনু", "lord": "Guru", "element": "Fire"},
-    {"en": "Makara (Capricorn)", "bn": "মকর", "lord": "Shani", "element": "Earth"},
-    {"en": "Kumbha (Aquarius)", "bn": "কুম্ভ", "lord": "Shani", "element": "Air"},
-    {"en": "Meena (Pisces)", "bn": "মীন", "lord": "Guru", "element": "Water"}
+    {"en": "Aries", "bn": "মেষ", "lord": "Mangala", "element": "Fire (অগ্নি)", "nature": "উদ্যমী ও আত্মবিশ্বাসী"},
+    {"en": "Taurus", "bn": "বৃষ", "lord": "Shukra", "element": "Earth (পৃথ্বী)", "nature": "ধৈর্যশীল ও সৌন্দর্যপ্রিয়"},
+    {"en": "Gemini", "bn": "মিথুন", "lord": "Budha", "element": "Air (বায়ু)", "nature": "বুদ্ধিমান ও যোগাযোগে পটু"},
+    {"en": "Cancer", "bn": "কর্কট", "lord": "Chandra", "element": "Water (জল)", "nature": "সংবেদনশীল ও স্নেহময়"},
+    {"en": "Leo", "bn": "সিংহ", "lord": "Surya", "element": "Fire (অগ্নি)", "nature": "নেতৃত্বপ্রিয় ও তেজস্বী"},
+    {"en": "Virgo", "bn": "কন্যা", "lord": "Budha", "element": "Earth (পৃথ্বী)", "nature": "বিশ্লেষণাত্মক ও হিসাবি"},
+    {"en": "Libra", "bn": "তুলা", "lord": "Shukra", "element": "Air (বায়ু)", "nature": "ন্যায়পরায়ণ ও ভারসাম্যপ্রিয়"},
+    {"en": "Scorpio", "bn": "বৃশ্চিক", "lord": "Mangala", "element": "Water (জল)", "nature": "দৃঢ়প্রতিজ্ঞ ও রহস্যসন্ধানী"},
+    {"en": "Sagittarius", "bn": "ধনু", "lord": "Guru", "element": "Fire (অগ্নি)", "nature": "ধার্মিক ও উচ্চাকাঙ্ক্ষী"},
+    {"en": "Capricorn", "bn": "মকর", "lord": "Shani", "element": "Earth (পৃথ্বী)", "nature": "কঠোর পরিশ্রমী ও শৃঙ্খলাপরায়ণ"},
+    {"en": "Aquarius", "bn": "কুম্ভ", "lord": "Shani", "element": "Air (বায়ু)", "nature": "মানবদরদী ও উদ্ভাবনী"},
+    {"en": "Pisces", "bn": "মীন", "lord": "Guru", "element": "Water (জল)", "nature": "আধ্যাত্মিক, দয়ালু ও দূরদর্শী"}
 ]
 
 NAKSHATRAS = [
-    ("Ashwini", "অশ্বিনী", "Ketu", 7), ("Bharani", "ভরণী", "Shukra", 20), ("Krittika", "কৃত্তিকা", "Surya", 6),
-    ("Rohini", "রোহিণী", "Chandra", 10), ("Mrigashira", "মৃগশিরা", "Mangala", 7), ("Ardra", "আর্দ্রা", "Rahu", 18),
-    ("Punarvasu", "পুনর্বসু", "Guru", 16), ("Pushya", "পুষ্যা", "Shani", 19), ("Ashlesha", "অশ্লেষা", "Budha", 17),
-    ("Magha", "মঘা", "Ketu", 7), ("Purva Phalguni", "পূর্ব ফল্গুনী", "Shukra", 20), ("Uttara Phalguni", "উত্তর ফল্গুনী", "Surya", 6),
-    ("Hasta", "হস্তা", "Chandra", 10), ("Chitra", "চিত্রা", "Mangala", 7), ("Swati", "স্বাতী", "Rahu", 18),
-    ("Vishakha", "বিশাখা", "Guru", 16), ("Anuradha", "অনুরাধা", "Shani", 19), ("Jyeshtha", "জ্যেষ্ঠা", "Budha", 17),
-    ("Mula", "মূলা", "Ketu", 7), ("Purva Ashadha", "পূর্বাষাঢ়া", "Shukra", 20), ("Uttara Ashadha", "উত্তরাষাঢ়া", "Surya", 6),
-    ("Shravana", "শ্রবণা", "Chandra", 10), ("Dhanishtha", "ধনিষ্ঠা", "Mangala", 7), ("Shatabhisha", "শতভিষা", "Rahu", 18),
-    ("Purva Bhadrapada", "পূর্বভাদ্রপদ", "Guru", 16), ("Uttara Bhadrapada", "উত্তরভাদ্রপদ", "Shani", 19), ("Revati", "রেবতী", "Budha", 17)
+    ("Ashwini", "অশ্বিনী", "Ketu", 7, "দ্রুত কাজ সম্পন্ন করার ক্ষমতা ও উদ্যম"),
+    ("Bharani", "ভরণী", "Shukra", 20, "সৃজনশীলতা, সততা ও দায়িত্বশীল মনোভাব"),
+    ("Krittika", "কৃত্তিকা", "Surya", 6, "স্পষ্টবাদিতা, একাগ্রতা ও লক্ষ্যভেদ ক্ষমতা"),
+    ("Rohini", "রোহিণী", "Chandra", 10, "আকর্ষণীয় ব্যক্তিত্ব, শিল্পানুরাগ ও মাধুর্য"),
+    ("Mrigashira", "মৃগশিরা", "Mangala", 7, "অনুসন্ধানী মন, কৌতূহল ও ভ্রমণপ্রিয়তা"),
+    ("Ardra", "আর্দ্রা", "Rahu", 18, "তীক্ষ্ণ বুদ্ধি ও প্রতিকূলতা জয়ের সামর্থ্য"),
+    ("Punarvasu", "পুনর্বসু", "Guru", 16, "সহনশীলতা, আশাবাদ ও আত্মশুদ্ধি"),
+    ("Pushya", "পুষ্যা", "Shani", 19, "সেবামূলক মানসিকতা ও গভীর দায়িত্ববোধ"),
+    ("Ashlesha", "অশ্লেষা", "Budha", 17, "কূটনৈতিক মেধা, তীক্ষ্ণ বিচার ও সতর্কতা"),
+    ("Magha", "মঘা", "Ketu", 7, "পিতৃকুল বা পূর্বপুরুষের আশীর্বাদ ও ব্যক্তিত্বের প্রভাব"),
+    ("Purva Phalguni", "পূর্ব ফল্গুনী", "Shukra", 20, "সৌখিনতা, সামাজিক জনপ্রিয়তা ও স্নেহশীলতা"),
+    ("Uttara Phalguni", "উত্তর ফল্গুনী", "Surya", 6, "দয়ালু স্বভাব, নীতিপরায়ণতা ও বিশ্বস্ততা"),
+    ("Hasta", "হস্তা", "Chandra", 10, "হস্তশিল্প বা প্রযুক্তিবিদ্যায় দক্ষতা ও চতুরতা"),
+    ("Chitra", "চিত্রা", "Mangala", 7, "নকশা, বিন্যাস ও মৌলিক পরিকল্পনায় নৈপুণ্য"),
+    ("Swati", "স্বাতী", "Rahu", 18, "স্বাধীনচেতা ভাব, ব্যবসায়িক দূরদৃষ্টি ও স্বাবলম্বন"),
+    ("Vishakha", "বিশাখা", "Guru", 16, "লক্ষ্যে পৌঁছানোর অদম্য সংকল্প ও তেজ"),
+    ("Anuradha", "অনুরাধা", "Shani", 19, "বন্ধুত্বভাব, সংগঠন ক্ষমতা ও ধৈর্য"),
+    ("Jyeshtha", "জ্যেষ্ঠা", "Budha", 17, "নেতৃত্বের অহংকার নিয়ন্ত্রণ ও দ্রুত সিদ্ধান্ত গ্রহণ"),
+    ("Mula", "মূলা", "Ketu", 7, "মূল সত্য অনুসন্ধানের গভীর ইচ্ছা ও দার্শনিক বোধ"),
+    ("Purva Ashadha", "পূর্বাষাঢ়া", "Shukra", 20, "দৃঢ় মনোবল, প্রত্যুৎপন্নমতিত্ব ও সুবক্তা"),
+    ("Uttara Ashadha", "উত্তরাষাঢ়া", "Surya", 6, "নম্রতা, দীর্ঘস্থায়ী সাফল্য ও সম্মান"),
+    ("Shravana", "শ্রবণা", "Chandra", 10, "শ্রবণক্ষমতা, জ্ঞান আহরণ ও শাস্ত্রচর্চা"),
+    ("Dhanishtha", "ধনিষ্ঠা", "Mangala", 7, "সঙ্গীত, ছন্দ ও সংগঠনবিদ্যায় পারদর্শিতা"),
+    ("Shatabhisha", "শতভিষা", "Rahu", 18, "গূঢ় জ্ঞান, চিকিৎসা বা গবেষণায় সাফল্য"),
+    ("Purva Bhadrapada", "পূর্বভাদ্রপদ", "Guru", 16, "সত্যনিষ্ঠা ও ত্যাগের মাধ্যমে উন্নতি"),
+    ("Uttara Bhadrapada", "উত্তরভাদ্রপদ", "Shani", 19, "শান্ত স্বভাব, দূরদৃষ্টি ও স্থিতপ্রজ্ঞতা"),
+    ("Revati", "রেবতী", "Budha", 17, "সহানুভূতি, দয়া ও আর্থিক সুরক্ষা")
 ]
 
 TITHIS_BN = [
@@ -105,20 +141,19 @@ DASHA_CYCLE = [
     ("Mangala", 7), ("Rahu", 18), ("Guru", 16), ("Shani", 19), ("Budha", 17)
 ]
 
-# Exaltation (Uchcha) and Debilitation (Neecha) signs as per BPHS Ch. 3
 DIGNITY_BPHS = {
-    "Surya":   {"uchcha": 0, "neecha": 6, "moolatrikona": 4},
-    "Chandra": {"uchcha": 1, "neecha": 7, "moolatrikona": 1},
-    "Mangala": {"uchcha": 9, "neecha": 3, "moolatrikona": 0},
-    "Budha":   {"uchcha": 5, "neecha": 11, "moolatrikona": 5},
-    "Guru":    {"uchcha": 3, "neecha": 9, "moolatrikona": 8},
-    "Shukra":  {"uchcha": 11, "neecha": 5, "moolatrikona": 6},
-    "Shani":   {"uchcha": 6, "neecha": 0, "moolatrikona": 10},
-    "Rahu":    {"uchcha": 1, "neecha": 7, "moolatrikona": 2},
-    "Ketu":    {"uchcha": 7, "neecha": 1, "moolatrikona": 8}
+    "Surya":   {"uchcha": 0, "neecha": 6, "own": [4]},
+    "Chandra": {"uchcha": 1, "neecha": 7, "own": [3]},
+    "Mangala": {"uchcha": 9, "neecha": 3, "own": [0, 7]},
+    "Budha":   {"uchcha": 5, "neecha": 11, "own": [2, 5]},
+    "Guru":    {"uchcha": 3, "neecha": 9, "own": [8, 11]},
+    "Shukra":  {"uchcha": 11, "neecha": 5, "own": [1, 6]},
+    "Shani":   {"uchcha": 6, "neecha": 0, "own": [9, 10]},
+    "Rahu":    {"uchcha": 1, "neecha": 7, "own": [10]},
+    "Ketu":    {"uchcha": 7, "neecha": 1, "own": [8]}
 }
 
-PLANET_SYMBOLS = {
+PLANET_NAMES = {
     "Surya": ("Sun", "রবি", "Su"),
     "Chandra": ("Moon", "চন্দ্র", "Mo"),
     "Mangala": ("Mars", "মঙ্গল", "Ma"),
@@ -130,7 +165,8 @@ PLANET_SYMBOLS = {
     "Ketu": ("Ketu", "কেতু", "Ke")
 }
 
-def calculate_chart(dob_val, tob_val):
+# ----------------- CALCULATION ENGINE -----------------
+def calculate_astrology(dob_val, tob_val):
     dt = datetime.datetime.combine(dob_val, tob_val)
     days = (dt - datetime.datetime(2000, 1, 1, 12, 0)).total_seconds() / 86400.0
 
@@ -166,40 +202,39 @@ def calculate_chart(dob_val, tob_val):
         nak_idx = int(norm_deg / (360.0 / 27.0)) % 27
         pada = (int((norm_deg % (360.0 / 27.0)) / (360.0 / 108.0)) % 4) + 1
         
-        sym = PLANET_SYMBOLS[name][2]
+        sym = PLANET_NAMES[name][2]
         house_occupants[house_num].append(sym)
         rashi_occupants[sign_idx].append(sym)
         planet_house_map[name] = house_num
 
-        # Dignity calculation per BPHS
-        dignity = "Sama (Neutral)"
+        dignity = "Sama (সাধারণ অবস্থান)"
         if sign_idx == DIGNITY_BPHS[name]["uchcha"]:
-            dignity = "Uchcha (Exalted / তুঙ্গী)"
+            dignity = "Uchcha (তুঙ্গী - পরম শুভ বল)"
         elif sign_idx == DIGNITY_BPHS[name]["neecha"]:
-            dignity = "Neecha (Debilitated / নীচস্থ)"
-        elif sign_idx == DIGNITY_BPHS[name]["moolatrikona"]:
-            dignity = "Moolatrikona"
+            dignity = "Neecha (নীচস্থ - দুর্বল বল)"
+        elif sign_idx in DIGNITY_BPHS[name]["own"]:
+            dignity = "Swa-kshetra (স্বক্ষেত্র - নিজস্ব বল)"
 
-        nak_en, nak_bn, nak_lord, _ = NAKSHATRAS[nak_idx]
+        nak_en, nak_bn, nak_lord, _, _ = NAKSHATRAS[nak_idx]
         planet_details.append({
-            "Graha": f"{name} ({PLANET_SYMBOLS[name][1]})",
+            "Graha": f"{PLANET_NAMES[name][0]} ({PLANET_NAMES[name][1]})",
             "Degree": f"{norm_deg % 30:.2f}°",
-            "Rashi": f"{RASHIS[sign_idx]['bn']} ({RASHIS[sign_idx]['en'].split()[0]})",
+            "Rashi": f"{RASHIS[sign_idx]['bn']} ({RASHIS[sign_idx]['en']})",
             "House": f"House {house_num}",
-            "Nakshatra": f"{nak_bn} (Pada {pada})",
-            "Dignity (শাস্ত্রীয় বল)": dignity
+            "Nakshatra": f"{nak_bn} (পদ {pada})",
+            "Dignity": dignity
         })
 
-    # Panjika Factors: Exact Tithi calculation
+    # Tithi Calculation (Panjika rule: 12 degrees per Tithi)
     tithi_diff = (moon_deg - sun_deg) % 360
     tithi_idx = int(tithi_diff // 12.0) % 30
     tithi_name = TITHIS_BN[tithi_idx]
 
-    # Vimshottari Mahadasha timeline
+    # Vimshottari Mahadasha
     nak_span = 360.0 / 27.0
     birth_nak_idx = int((moon_deg % 360) / nak_span) % 27
     nak_progress = ((moon_deg % 360) % nak_span) / nak_span
-    birth_nak_en, birth_nak_bn, dasha_lord, total_years = NAKSHATRAS[birth_nak_idx]
+    birth_nak_en, birth_nak_bn, dasha_lord, total_years, nak_trait = NAKSHATRAS[birth_nak_idx]
     
     balance_years = total_years * (1.0 - nak_progress)
     dasha_timeline = []
@@ -214,8 +249,9 @@ def calculate_chart(dob_val, tob_val):
         dasha_timeline.append((nxt_lord, f"{int(runner)} - {int(runner + dur)}"))
         runner += dur
 
-    return lagna_sign_idx, house_occupants, planet_details, moon_deg, planet_house_map, dasha_timeline, (birth_nak_en, birth_nak_bn), rashi_occupants, tithi_name
+    return lagna_sign_idx, house_occupants, planet_details, moon_deg, planet_house_map, dasha_timeline, (birth_nak_en, birth_nak_bn, nak_trait), rashi_occupants, tithi_name
 
+# ----------------- SVG CHARTS -----------------
 def render_north_indian_svg(lagna_idx, occupants):
     h_signs = {h: ((lagna_idx + h - 1) % 12) + 1 for h in range(1, 13)}
     coords = {
@@ -277,134 +313,283 @@ def render_east_indian_svg(lagna_idx, rashi_occupants):
     </div>
     """
 
-# ----------------- EXECUTE CALCULATION -----------------
-lagna_idx, occupants, p_details, moon_deg, p_house_map, dasha_timeline, birth_nak, rashi_occupants, tithi_name = calculate_chart(dob, tob)
+# ----------------- EXECUTE LOGIC -----------------
+lagna_idx, occupants, p_details, moon_deg, p_house_map, dasha_timeline, birth_nak, rashi_occupants, tithi_name = calculate_astrology(dob, tob)
 moon_sign_idx = int(moon_deg // 30) % 12
 
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.markdown("#### 💎 লগ্ন কোষ্ঠী ছক (Chart)")
+    st.markdown("#### 💎 জন্ম কোষ্ঠী চক্র (Chart)")
     if "North Indian" in chart_view:
         st.markdown(render_north_indian_svg(lagna_idx, occupants), unsafe_allow_html=True)
     else:
         st.markdown(render_east_indian_svg(lagna_idx, rashi_occupants), unsafe_allow_html=True)
-    st.caption("Astronomically calculated under Lahiri Sidereal Zodiac (Chitra Paksha Ayanamsha).")
+    st.caption("Lahiri Sidereal Zodiac (Chitra Paksha Ayanamsha) — সিদ্ধান্ত পঞ্জিকা সম্মত গণনা")
 
 with col2:
-    st.markdown("#### 🌟 পঞ্চাঙ্গ ও জন্ম বিবরণী (Panjika Data)")
+    st.markdown("#### 🌟 পঞ্চাঙ্গ পরিচয় ও মৌলিক শক্তি (Identity & Strengths)")
     st.markdown(f"""
     <div class="card">
-        <div><b>তিথি (Tithi):</b> <span class="highlight-gold">{tithi_name}</span> <span class="source-tag">সিদ্ধান্ত পঞ্জিকা (সূর্য-চন্দ্র কৌণিক ব্যবধান)</span></div>
-        <div><b>লগ্ন (Ascendant):</b> <span class="highlight-gold">{RASHIS[lagna_idx]['bn']} ({RASHIS[lagna_idx]['en'].split()[0]})</span></div>
-        <div><b>জন্ম রাশি (Moon Sign):</b> <span class="highlight-gold">{RASHIS[moon_sign_idx]['bn']} ({RASHIS[moon_sign_idx]['en'].split()[0]})</span></div>
+        <div><b>লগ্ন (Lagna):</b> <span class="highlight-gold">{RASHIS[lagna_idx]['bn']} ({RASHIS[lagna_idx]['en']})</span> — <i>তত্ত্ব: {RASHIS[lagna_idx]['element']}</i></div>
+        <div><b>জন্ম রাশি (Moon Sign):</b> <span class="highlight-gold">{RASHIS[moon_sign_idx]['bn']} ({RASHIS[moon_sign_idx]['en']})</span></div>
         <div><b>জন্ম নক্ষত্র (Nakshatra):</b> <span class="highlight-gold">{birth_nak[1]} ({birth_nak[0]})</span></div>
-        <div><b>লগ্নপতি (Lagna Lord):</b> <span class="highlight-gold">{RASHIS[lagna_idx]['lord']}</span> (অবস্থান: {p_house_map.get(RASHIS[lagna_idx]['lord'], 1)}ম ভাব)</div>
+        <div><b>তিথি (Panchang Tithi):</b> <span class="highlight-gold">{tithi_name}</span></div>
+        <div><b>লগ্নপতি (Ascendant Lord):</b> <span class="highlight-gold">{RASHIS[lagna_idx]['lord']}</span> (অবস্থান: {p_house_map.get(RASHIS[lagna_idx]['lord'], 1)}ম ভাব)</div>
         <div><b>জন্মস্থান (Location):</b> <span class="highlight-gold">{place}</span></div>
     </div>
     """, unsafe_allow_html=True)
 
-# ----------------- SHASTRA-BASED TABS -----------------
+# ----------------- MAIN TABS -----------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "🪐 গ্রহ স্পষ্ট ও বল (Planetary)", 
-    "⏳ বিংশোত্তরী দশা (Dashas)", 
-    "📕 লাল কিতাব শাস্ত্র (Lal Kitab 1952)", 
-    "📜 পরাশর হোরা বিচার (BPHS Houses)", 
-    "⚖️ শাস্ত্রীয় যোগ ও প্রতিকার (Yogas & Upay)"
+    "🌟 আপনার শক্তি ও প্রকৃতি (Your Strengths)",
+    "🪐 ৯টি গ্রহের ফল ও প্রতিকার (Graha Phal & Upay)",
+    "📅 সাপ্তাহিক প্রতিকার সূচি (Weekly Action Plan)",
+    "📊 গ্রহের স্পষ্ট ছক ও মহাদশা (Dasha Table)",
+    "⚖️ রাজযোগ ও দোষ বিচার (Yogas & Doshas)"
 ])
 
 with tab1:
-    st.markdown("### গ্রহের স্পষ্ট দ্রাঘিমাংশ, নক্ষত্র ও শাস্ত্রীয় বল (BPHS Ch. 3)")
-    st.dataframe(p_details, use_container_width=True)
+    st.markdown("### 🌟 শাস্ত্র অনুসারে আপনার জন্মগত শক্তি ও স্বভাব (Core Strengths)")
+    
+    st.markdown(f"""
+    <div class="card">
+        <h4 style="color:#f4c66a;margin:0 0 6px 0;">১. লগ্ন শক্তি (Lagna Personality & Physical Strength)</h4>
+        আপনার লগ্ন হলো <b>{RASHIS[lagna_idx]['bn']} ({RASHIS[lagna_idx]['en']})</b>। এর অধিপতি গ্রহ <b>{RASHIS[lagna_idx]['lord']}</b>।<br>
+        • <b>সহজ ব্যাখ্যা (Simple Explanation):</b> আপনার স্বভাবের মূল ভিত্তি হলো <i>{RASHIS[lagna_idx]['nature']}</i>। {RASHIS[lagna_idx]['element']} হওয়ার কারণে আপনার সিদ্ধান্ত নেওয়ার ক্ষমতা এবং দূরদর্শিতা প্রবল।<br>
+        • <b>পরামর্শ:</b> লগ্নপতি বলবান রাখতে নিজের শারীরিক স্বাস্থ্য ও নীতিপরায়ণতা বজায় রাখুন।
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="card">
+        <h4 style="color:#f4c66a;margin:0 0 6px 0;">২. মন ও বুদ্ধির শক্তি: চন্দ্র রাশি ও নক্ষত্র (Mental Strengths)</h4>
+        আপনার রাশি হলো <b>{RASHIS[moon_sign_idx]['bn']}</b> এবং নক্ষত্র হলো <b>{birth_nak[1]}</b>।<br>
+        • <b>সহজ ব্যাখ্যা (Simple Explanation):</b> শাস্ত্র মতে আপনার মনের প্রকৃতি: <i>{birth_nak[2]}</i>।<br>
+        • <b>কর্মদক্ষতা:</b> চন্দ্র ও নক্ষত্র শক্তির কারণে আপনি যেকোনো কাজে সূক্ষ্ম বিচার ও সামাজিক যোগাযোগ কাজে লাগিয়ে সাফল্য পেতে পারেন।
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="card">
+        <h4 style="color:#f4c66a;margin:0 0 6px 0;">৩. তিথি প্রভাব (Panchang Tithi Influence)</h4>
+        আপনার জন্মতিথি <b>{tithi_name}</b>।<br>
+        • তিথির শুভত্ব বৃদ্ধি করতে নিয়মিত গুরুজনদের প্রতি ভক্তি এবং শুদ্ধাচার বজায় রাখা উচিত।
+    </div>
+    """, unsafe_allow_html=True)
 
 with tab2:
-    st.markdown("### ⏳ বিংশোত্তরী মহাদশা নির্ণয় (BPHS Dasha Adhyaya)")
-    st.caption("চন্দ্র নক্ষত্রভুক্তির অবশিষ্টাংশ ও শতবর্ষীয় বিংশোত্তরী সময়কাল:")
-    cd1, cd2 = st.columns(2)
-    for idx, (lord, span) in enumerate(dasha_timeline):
-        target = cd1 if idx < 5 else cd2
-        with target:
-            st.markdown(f"""
-            <div class="card" style="padding:10px; margin-bottom:8px;">
-                <b>{lord} মহাদশা</b>: <span class="highlight-gold">{span}</span>
+    st.markdown("### 🪐 ৯টি গ্রহের অবস্থান, শুভ-অশুভ ফল ও শাস্ত্রীয় প্রতিকার")
+    st.caption("প্রতিটি গ্রহ কোন ঘরে আছে, তার ফলে কী ঘটবে, কোনো খারাপ প্রভাব থাকলে কীভাবে তা দূর করবেন এবং কী নিয়ম বা পূজা করবেন:")
+
+    # Detailed knowledge map per Graha and House
+    GRAHA_DATA = {
+        "Surya": {
+            "name_bn": "সূর্য (Sun / রবি)",
+            "signifies": "আত্মা, পিতা, কর্মক্ষেত্রে সম্মান, সরকারি কাজ ও জীবনীশক্তি",
+            10: {
+                "good": "১০ম ভাবে সূর্য পরম দিকবল (Digbala) লাভ করে। কর্মক্ষেত্রে নেতৃত্ব, প্রশাসনিক সম্মান, কর্মে উচ্চপদ ও পিতার আশীর্বাদ লাভ হয়। (High leadership, career recognition & respect from superiors).",
+                "bad": "অতিরিক্ত অহংকার বা ক্রোধের কারণে উর্ধ্বতন কর্তৃপক্ষের সাথে মতবিরোধ হতে পারে। (Ego clashes with authorities if uncontrolled).",
+                "remedy": "প্রতিদিন সকালে পিতাকে সম্মান করুন। অহংকার ত্যাগ করে সততার সাথে কাজ করুন। (Respect father daily, maintain humility).",
+                "ritual": "প্রত্যহ সকালে স্নানের পর তামার পাত্রে জল নিয়ে পূর্বদিকে মুখ করে সূর্যকে অর্ঘ্য দিন এবং 'ওঁ সূর্যায় নমঃ' জপ করুন। (Offer water from copper vessel to rising Sun daily)."
+            },
+            "default": {
+                "good": "আত্মবিশ্বাস ও তেজ বৃদ্ধি করে। আত্মমর্যাদা বজায় থাকে। (Gives self-confidence and vitality).",
+                "bad": "মাথা গরম হওয়া বা চোখের সমস্যা দেখা দিতে পারে। (Tendency of short temper or eye strain).",
+                "remedy": "পিতৃস্থানীয় ব্যক্তিদের সেবা করুন। (Honor elder father-figures).",
+                "ritual": "সকালে আদিত্য হৃদয় স্তোত্র বা গায়ত্রী মন্ত্র পাঠ শুভ। (Recite Gayatri Mantra daily)."
+            }
+        },
+        "Chandra": {
+            "name_bn": "চন্দ্র (Moon / সোম)",
+            "signifies": "মন, মানসিক শান্তি, মাতা, কল্পনাশক্তি ও তরল পদার্থ",
+            8: {
+                "good": "৮ম ভাবে চন্দ্র গভীর অন্তর্দৃষ্টি, রহস্যবিদ্যা, গবেষণা ও সূক্ষ্ম বিশ্লেষণী মেধা দান করে। (Deep intuition, occult interests & research ability).",
+                "bad": "মানসিক দোলাচল, অতিরিক্ত দুশ্চিন্তা, ঘুমের অনিয়ম ও অজানা ভয় কাজ করতে পারে। (Mental anxiety, overthinking & emotional swings).",
+                "remedy": "মাথা ঠান্ডা রাখুন। রূপার জিনিস ব্যবহার করুন এবং মায়ের সেবা করুন। রূপা কখনো দান বা বিক্রি করবেন না। (Keep silver, respect mother, avoid selling family silver).",
+                "ritual": "প্রতি সোমবার শিবলিঙ্গে কাঁচা দুধ ও জল অর্পণ করুন। রাতে রূপার পাত্রে জল রেখে সকালে তা পান করুন। (Offer milk/water to Shivling on Mondays; drink water from silver vessel)."
+            },
+            "default": {
+                "good": "সংবেদনশীল ও সৃষ্টিশীল মন তৈরি করে। (Creative, empathetic mind).",
+                "bad": "মেজাজের দ্রুত পরিবর্তন বা সর্দিকাশির প্রবণতা। (Mood fluctuations).",
+                "remedy": "পরিবারের মহিলাদের সন্তুষ্ট রাখুন। (Keep maternal figures happy).",
+                "ritual": "সোমবার শিবপূজা এবং জল অপচয় রোধ করা পরম প্রতিকার। (Worship Lord Shiva on Mondays)."
+            }
+        },
+        "Mangala": {
+            "name_bn": "মঙ্গল (Mars / ভৌম)",
+            "signifies": "সাহস, পরাক্রম, ভূমি, রক্ত ও ভ্রাতৃত্ব",
+            1: {
+                "good": "১ম ভাবে মঙ্গল অসীম সাহস, নির্ভীক চরিত্র, দ্রুত সিদ্ধান্ত নেওয়ার ক্ষমতা ও তেজস্বী শরীর প্রদান করে। (Boldness, energy, quick execution).",
+                "bad": "লগ্নে মঙ্গলের কারণে মাঙ্গলিক প্রভাব তৈরি হয়। আকস্মিক রাগ, চোট-আঘাতের সম্ভাবনা বা কঠোর কথার প্রবণতা থাকে। (Lagna Manglik: anger, risk of minor cuts/burns, harsh speech).",
+                "remedy": "রাগ নিয়ন্ত্রণ করুন। ভাই ও সহকর্মীদের সাথে সুসম্পর্ক রাখুন। (Control impulsive anger, be supportive of brothers).",
+                "ritual": "প্রতি মঙ্গলবার হনুমান চালীসা পাঠ করুন। মঙ্গলবার মিষ্টি বা গুড় দান করুন। (Recite Hanuman Chalisa on Tuesdays; donate sweets/jaggery)."
+            },
+            "default": {
+                "good": "কর্মোদ্যম ও বাধাবিপত্তি অতিক্রম করার মনোবল দেয়। (High courage to fight obstacles).",
+                "bad": "অস্থিরতা বা বিরোধের আশঙ্কা। (Restlessness or conflicts).",
+                "remedy": "মিষ্টি কথা বলুন এবং কাউকে প্রতারণা করবেন না। (Speak sweetly).",
+                "ritual": "মঙ্গলবার লাল রঙের মিষ্টি দান ও সুন্দরকাণ্ড পাঠ শুভ। (Donate red sweets on Tuesday)."
+            }
+        },
+        "Budha": {
+            "name_bn": "বুধ (Mercury / সৌমা)",
+            "signifies": "বুদ্ধি, ব্যবসা, হিসাব, বাক্য ও যোগাযোগ দক্ষতা",
+            10: {
+                "good": "১০ম ভাবে বুধ কর্মক্ষেত্রে বুদ্ধিমত্তা, ব্যবসায়িক দূরদৃষ্টি, হিসাবরক্ষণ ও দক্ষ যোগাযোগের মাধ্যমে খ্যাতি আনে। (Sharp business mind, accountancy, consultancy success).",
+                "bad": "একক সিদ্ধান্তে স্থির না থাকতে পারলে কর্মে ঘনঘন পরিবর্তন হতে পারে। (Distraction from pursuing multiple goals at once).",
+                "remedy": "ছোট বোন বা কন্যা সন্তানদের স্নেহ ও উপহার দিন। মিথ্যা কথা পরিহার করুন। (Respect sisters and young girls; avoid dishonesty).",
+                "ritual": "বুধবার গরুকে সবুজ ঘাস বা পালং শাক খাওয়ান। বিষ্ণু সহস্রনাম পাঠ অতি শুভ। (Feed green grass to cows on Wednesdays)."
+            },
+            "default": {
+                "good": "তীক্ষ্ণ স্মৃতিশক্তি ও বাচনিক নৈপুণ্য। (Good speech & analytical power).",
+                "bad": "সিদ্ধান্তহীনতা বা নার্ভের দুর্বলতা। (Indecision).",
+                "remedy": "গাছপালা পরিচর্যা করুন। (Plant green trees).",
+                "ritual": "বুধবার তুলসী মঞ্চে জল নিবেদন করুন। (Water Tulsi plant on Wednesdays)."
+            }
+        },
+        "Guru": {
+            "name_bn": "বৃহস্পতি (Jupiter / দেবগুরু)",
+            "signifies": "জ্ঞান, ধর্ম, শিক্ষকতা, সন্তান ও দৈব কৃপা",
+            2: {
+                "good": "২য় ভাবে বৃহস্পতি সুবক্তা করে তোলে। সৎ পথে অর্থ উপার্জন, পরিবারে মর্যাদা ও সত্যভাষণের ফল দেয়। (Knowledgeable speech, honest wealth creation, family respect).",
+                "bad": "কারো প্রতি অতিরিক্ত অন্ধবিশ্বাস রাখলে আর্থিক ক্ষতি হতে পারে। (Blind faith causing financial oversights).",
+                "remedy": "কখনো গুরুজন বা শিক্ষকদের অবমাননা করবেন না। বিনামূল্যে কিছু গ্রহণ করবেন না। (Respect teachers; never accept things for free).",
+                "ritual": "প্রত্যহ সকালে কপালে কেশর বা হলুদ-চন্দনের তিলক লাগান। বৃহস্পতিবার ছোলার ডাল বা হলুদ ফল দান করুন। (Apply Kesar/Haldi tilak daily; donate yellow items on Thursday)."
+            },
+            "default": {
+                "good": "ন্যায়পরায়ণতা ও সার্বিক শুভত্ব বজায় রাখে। (Brings wisdom & moral balance).",
+                "bad": "অতি উদারতা বা অলসতা। (Excessive optimism).",
+                "remedy": "ধর্মগ্রন্থ বা শিক্ষামূলক কাজে সহায়তা করুন। (Support educational causes).",
+                "ritual": "বৃহস্পতিবার বিষ্ণু পূজা ও গুরুর আশীর্বাদ গ্রহণ। (Worship Lord Vishnu on Thursdays)."
+            }
+        },
+        "Shukra": {
+            "name_bn": "শুক্র (Venus / দৈত্যগুরু)",
+            "signifies": "প্রেম, দাম্পত্য, ধন-সম্পদ, যানবাহন ও সৌন্দর্য",
+            11: {
+                "good": "১১শ ভাবে শুক্র বিভিন্ন উৎস থেকে অর্থপ্রাপ্তি, বন্ধুভাগ্য, বিলাসবহুল জীবন ও নারীদের সহযোগিতায় সৌভাগ্য দেয়। (Multiple income sources, luxury, financial gains through networks).",
+                "bad": "অতিরিক্ত শৌখিনতায় অপচয় বা কামপ্রবণতার কারণে আর্থিক ক্ষতি হতে পারে। (Overspending on luxury or temptations).",
+                "remedy": "সর্বদা পরিষ্কার ও পরিচ্ছন্ন পোশাক পরুন। ঘরের পরিবেশ সুগন্ধি রাখুন। (Wear neat, clean clothes; maintain a fragrant living space).",
+                "ritual": "শুক্রবার সাদা মিষ্টি বা ক্ষীর দরিদ্রদের দান করুন। মা লক্ষ্মীর পূজা করুন। (Donate white sweets/curd on Fridays; worship Goddess Lakshmi)."
+            },
+            "default": {
+                "good": "সৌন্দর্য ও সামাজিক জনপ্রিয়তা বৃদ্ধি করে। (Social charm and luxury).",
+                "bad": "অর্থনৈতিক অসাবধানতা। (Financial carelessness).",
+                "remedy": "স্ত্রী ও নারীদের পূর্ণ সম্মান দিন। (Respect women in life).",
+                "ritual": "শুক্রবার শ্রীসূক্ত পাঠ পরম ফলপ্রসূ। (Recite Sri Suktam on Friday)."
+            }
+        },
+        "Shani": {
+            "name_bn": "শনি (Saturn / কর্মফলদাতা)",
+            "signifies": "কর্ম, পরিশ্রম, শৃঙ্খলা, আয়ু ও সাধারণ মানুষ",
+            2: {
+                "good": "২য় ভাবে শনি জাতককে বাস্তববাদী করে। কঠোর পরিশ্রমের মাধ্যমে স্থায়ী অর্থ ও দীর্ঘস্থায়ী সম্পত্তি অর্জিত হয়। (Practical financial sense; wealth through persistent hard work).",
+                "bad": "মেষ রাশিতে শনি নীচস্থ হলে প্রারম্ভিক জীবনে ধন সঞ্চয়ে বিলম্ব, পারিবারিক মনোমালিন্য বা মুখের কর্কশ কথা তৈরি করে। (Delayed wealth accumulation in early years; harsh tone).",
+                "remedy": "শ্রমিক, দিনমজুর ও সাফাইকর্মীদের সাহায্য করুন। মদ, মাংস ও জুয়া সম্পূর্ণরূপে বর্জন করুন। (Help manual laborers; avoid alcohol, meat, and unethical gains).",
+                "ritual": "শনিবার সরিষার তেল দান (ছায়াদান) করুন অথবা কালো কুকুরকে রুটি খাওয়ান। সন্ধ্যায় শনি মন্দিরে বা অশ্বত্থ তলায় সরিষার তেলের প্রদীপ জ্বালুন। (Feed stray dogs on Saturdays; light mustard oil lamp under Peepal tree)."
+            },
+            "default": {
+                "good": "ধৈর্য ও স্থিতিশীলতা দান করে। (Patience and long-term endurance).",
+                "bad": "কাজে অযথা বিলম্ব বা একাকীত্ব। (Delays in progress).",
+                "remedy": "অসহায় মানুষের সেবা করুন। (Help the needy).",
+                "ritual": "শনিবার হনুমান চালীসা বা শনি চালীসা পাঠ। (Recite Hanuman/Shani Chalisa on Saturday)."
+            }
+        },
+        "Rahu": {
+            "name_bn": "রাহু (Rahu / মায়াবী গ্রহ)",
+            "signifies": "আকস্মিক উন্নতি, প্রযুক্তি, উচ্চাকাঙ্ক্ষা ও রাজনীতি",
+            10: {
+                "good": "১০ম ভাবে রাহু জাতককে কৌশলী, প্রযুক্তিনির্ভর ও রাতারাতি প্রভাবশালী করে তুলতে পারে। রাজনীতি ও আধুনিক ব্যবসায় বিশেষ শুভ। (Success in tech, modern trade, strategic influence).",
+                "bad": "কাজে অস্থিরতা, আকস্মিক অপবাদ বা কর্মক্ষেত্রে গোপন শত্রুর উপদ্রব সৃষ্টি হতে পারে। (Workplace politics, sudden volatility, distractions).",
+                "remedy": "ঘরে বা ছাদে কখনো ভাঙা ইলেকট্রনিক সামগ্রী, অকেজো কাঁচ বা পুরনো তার জমিয়ে রাখবেন না। (Do not store broken electronics, scrap, or faulty wiring at home).",
+                "ritual": "পকেটে বা গলায় একটি নিরেট রূপার চারকোনা টুকরো রাখুন। সন্ধ্যার পর ঘরে কর্পূর প্রদীপ জ্বালান। (Keep a square solid silver piece; burn camphor at evening)."
+            },
+            "default": {
+                "good": "আউট-অব-দ্য-বক্স চিন্তা ও উদ্ভাবনী মেধা। (Unconventional thinking).",
+                "bad": "বিভ্রান্তি, অলীক কল্পনা ও অতিরিক্ত ঝুঁকি নেওয়ার প্রবণতা। (Confusion & illusions).",
+                "remedy": "নেশাদ্রব্য থেকে সম্পূর্ণ দূরে থাকুন। (Stay away from addictions).",
+                "ritual": "কুষ্ঠ রোগীদের সাহায্য এবং শিবলিঙ্গে জল নিবেদন। (Help the afflicted; Shiva puja)."
+            }
+        },
+        "Ketu": {
+            "name_bn": "কেতু (Ketu / মোক্ষকারক)",
+            "signifies": "আধ্যাত্মিকতা, বৈরাগ্য, গুপ্তবিদ্যা ও আত্মশুদ্ধি",
+            4: {
+                "good": "৪র্থ ভাবে কেতু আধ্যাত্মিক চর্চা, অন্তর্মুখী শান্তি এবং নিজস্ব আদর্শে অবিচল থাকার শক্তি দেয়। (Spiritual detachment, philosophical peace).",
+                "bad": "নিজের গৃহপরিবেশে মন না বসা, মানসিক অতৃপ্তি বা মায়ের স্বাস্থ্যে চিন্তা। (Inner dissatisfaction at home, emotional detachment).",
+                "remedy": "গৃহের বয়োবৃদ্ধ ও মায়ের যত্ন নিন। হলুদ বা কেশর নিয়মিত ব্যবহার করুন। (Care for elderly maternal figures).",
+                "ritual": "কালো ও সাদা (চিতকবরা) কুকুরকে প্রতিদিন খাদ্য বা রুটি দিন। গণেশ পূজা করুন। (Feed dual-colored dogs daily; worship Lord Ganesha)."
+            },
+            "default": {
+                "good": "গভীর অন্তর্দৃষ্টি ও লোভহীন চরিত্র। (Spiritual insight & detachment).",
+                "bad": "লক্ষ্যহীনতা বা সম্পর্কে অহেতুক উদাসীনতা। (Lack of direction).",
+                "remedy": "কুকুর বা প্রাণীদের প্রতি সদয় হোন। (Be kind to street animals).",
+                "ritual": "গণেশ দ্বাদশ নাম স্তোত্র পাঠ। (Recite Ganesha mantras)."
+            }
+        }
+    }
+
+    for graha_key in ["Surya", "Chandra", "Mangala", "Budha", "Guru", "Shukra", "Shani", "Rahu", "Ketu"]:
+        h_pos = p_house_map.get(graha_key, 1)
+        g_info = GRAHA_DATA[graha_key]
+        house_specific = g_info.get(h_pos, g_info["default"])
+        
+        st.markdown(f"""
+        <div class="graha-card">
+            <h4 style="color:#f4c66a;margin:0 0 4px 0;">{g_info['name_bn']} — অবস্থান: {h_pos}ম ভাব (House {h_pos})</h4>
+            <div style="font-size:0.85rem;color:#a0a6c6;margin-bottom:8px;">কারক তত্ত্ব: {g_info['signifies']}</div>
+            
+            <p><b>✨ শুভ প্রভাব (What will happen good):</b><br>{house_specific['good']}</p>
+            <p><b>⚠️ সম্ভাব্য ঝুঁকি বা অশুভ প্রভাব (Risks / Bad effects if afflicted):</b><br>{house_specific['bad']}</p>
+            
+            <div class="remedy-box">
+                <b>🛠️ কী করলে ভালো হবে (How to correct it / Simple Lifestyle Upay):</b><br>
+                {house_specific['remedy']}
             </div>
-            """, unsafe_allow_html=True)
-
-with tab3:
-    st.markdown("### 📕 লাল কিতাব নিয়ম ও অরুণ পণ্ডিত প্রদর্শিত সূত্র")
-    st.info("লাল কিতাব অনুসারে কুষ্ঠির ১২টি ভাব স্থির (Fixed Houses): ১ম ভাব = মেষ, ২য় ভাব = বৃষ। এখানে রাশি প্রাধান্য পায় না, পাকা ঘরের অধিপতি প্রাধান্য পায়।")
-
-    rahu_h = p_house_map.get("Rahu", 0)
-    moon_h = p_house_map.get("Chandra", 0)
-    
-    col_l1, col_l2 = st.columns(2)
-    with col_l1:
-        st.markdown(f"**১. রাহু অবস্থান ({rahu_h}ম ভাব) — শাস্ত্রীয় ফল [লাল কিতাব ১৯৫২ সংহিতা]:**")
-        bphs_rahu_source = {
-            1: "১ম ভাবে রাহু 'তখত বা সিংহাসনে বসা ফকির'। চিন্তায় অস্থিরতা কিন্তু প্রযুক্তি ও কূটনীতিতে দ্রুত সাফল্য। প্রতিকার: সন্ধ্যার পর কর্পূর প্রদীপ জ্বালুন।",
-            2: "২য় ভাবে রাহু থাকলে আর্থিক ওঠানামা বা অকারণ ব্যয় হতে পারে। প্রতিকার: নিরেট রূপার গুলি নিজের কাছে রাখুন।",
-            5: "৫ম ভাবে রাহু বুদ্ধিবলে আকস্মিক লাভ দেয় কিন্তু উচ্চশিক্ষায় মনোযোগের অভাব ঘটায়। প্রতিকার: হাতির পায়ের মাটি বা রূপার হাতি গৃহে রাখুন।",
-            8: "৮ম ভাবে রাহু 'পাকা ঘর'। আকস্মিক দুর্ঘটনা ও বাধার আশঙ্কা তৈরি করে। প্রতিকার: ঘরের ছাদে বা উত্তর-পশ্চিম কোণে ভাঙা কাঁচ ও অকেজো তার রাখবেন না।",
-            10: "১০ম ভাবে রাহু রাজকীয় ব্যক্তিত্ব গঠন করে, রাজনীতি ও বাণিজ্যে দ্রুত প্রতিপত্তি দেয়। প্রতিকার: মাথায় সাদা টুপি বা সাদা তিলক ধারণ ফলপ্রসূ।"
-        }
-        st.write(bphs_rahu_source.get(rahu_h, f"রাহু {rahu_h}ম ভাবে অবস্থানরত। কোনো ইলেকট্রনিক বর্জ্য জমিয়ে রাখবেন না।"))
-        st.markdown('<span class="source-tag">সূত্র: লাল কিতাব (ফারসি মূল সংহিতা ও অরুণ পণ্ডিত বিশ্লেষণ)</span>', unsafe_allow_html=True)
-
-        st.markdown(f"<br>**২. চন্দ্র অবস্থান ({moon_h}ম ভাব) [লাল কিতাব পাকা ঘর নিয়ম]:**", unsafe_allow_html=True)
-        moon_source = {
-            1: "১ম ভাবে চন্দ্র মাতা ও মানসিক শান্তির পরিপোষক। শুভ ফল রক্ষার্থে দুধ বা রূপা কখনো বিক্রি বা দান করবেন না।",
-            4: "৪র্থ ভাবে চন্দ্র নিজ পাকা ঘরে পরম বলশালী। মাতৃসেবায় সকল পার্থিব উন্নতি সম্ভব।",
-            8: "৮ম ভাবে চন্দ্র মানসিক দোলাচল তৈরি করে। প্রতিকার: শিবলিঙ্গে দুধ ও কাঁচা জল অর্পণ করুন।"
-        }
-        st.write(moon_source.get(moon_h, f"চন্দ্র {moon_h}ম ভাবে অবস্থান করছেন। চন্দ্রের শুভত্ব অক্ষুণ্ণ রাখতে সর্বদা পরিষ্কার রূপার গয়না বা মুদ্রা কাছে রাখুন।"))
-        st.markdown('<span class="source-tag">সূত্র: লাল কিতাব (চন্দ্র বিচার অধ্যায়)</span>', unsafe_allow_html=True)
-
-    with col_l2:
-        st.markdown("**৩. সোয়ে হুয়ে ঘর (Sleeping Houses) সনাক্তকরণ:**")
-        empty_houses = [h for h in range(1, 13) if len(occupants.get(h, [])) == 0]
-        st.write(f"যে ভাবগুলি শূন্য বা নির্জন: {', '.join([f'ভাব {h}' for h in empty_houses])}")
-        st.markdown("""
-        <div class="remedy-box">
-            <b>লাল কিতাব জাগ্রত করার নিয়ম:</b> শূন্য ভাবগুলি তাদের স্বাভাবিক পাকা অধিপতির গোচর অথবা নির্দিষ্ট নৈতিক কর্ম দ্বারা সক্রিয় হয়। উদাহরণস্বরূপ, ২য় ভাব খালি থাকলে গুরুজনদের চরণ স্পর্শ ও সত্যভাষণ দ্বারা ধনভাব সক্রিয় করতে হয়।
+            
+            <div class="ritual-box">
+                <b>🙏 নির্দিষ্ট আচার ও পূজা (Exact Ritual & Mantra):</b><br>
+                {house_specific['ritual']}
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
+with tab3:
+    st.markdown("### 📅 সাপ্তাহিক প্রতিকার ও দৈনন্দিন নিয়ম সূচি (Weekly Action Plan)")
+    st.info("আপনার কোষ্ঠীর সকল গ্রহের সামঞ্জস্য ও মানসিক প্রশান্তির জন্য এই সাপ্তাহিক সহজ নিয়মগুলি পালন করুন:")
+
+    st.markdown("""
+| বার (Day) | নিয়ন্ত্রক গ্রহ | কী করবেন (Simple Action in Bengali & English) | কী লাভ হবে (Direct Purpose) |
+| :--- | :--- | :--- | :--- |
+| **সোমবার (Monday)** | চন্দ্র (Moon) | শিবলিঙ্গে কাঁচা দুধ ও জল অর্পণ; রূপার গয়না বা মুদ্রা কাছে রাখা। *(Offer milk/water to Shivling; carry silver)* | মানসিক অস্থিরতা, অতিরিক্ত চিন্তা ও দুশ্চিন্তা দূর হয়। |
+| **মঙ্গলবার (Tuesday)** | মঙ্গল (Mars) | হনুমান চালীসা পাঠ এবং মিষ্টি বা গুড় বিতরণ; রাগ নিয়ন্ত্রণ। *(Recite Hanuman Chalisa; donate jaggery/sweets)* | মাঙ্গলিক তেজ শান্ত হয়, রক্ত ও গৃহস্থালি সম্পর্কের শুভত্ব বাড়ে। |
+| **বুধবার (Wednesday)** | বুধ (Mercury) | গরুকে সবুজ ঘাস/পালং শাক খাওয়ানো; বোন বা ছোট মেয়েদের উপহার। *(Feed green grass to cows; respect sisters)* | বুদ্ধি, ব্যবসায়িক সিদ্ধান্ত ও আর্থিক বাণিজ্যে দ্রুত উন্নতি হয়। |
+| **বৃহস্পতিবার (Thursday)** | বৃহস্পতি (Jupiter) | কপালে চন্দন বা হলুদের তিলক লাগানো; শিক্ষক ও গুরুজনদের সম্মান। *(Apply Chandan/Haldi tilak; honor teachers)* | জ্ঞান, মানসিক স্থৈর্য ও পারিবারিক জীবনে দৈব আশীর্বাদ লাভ। |
+| **শুক্রবার (Friday)** | শুক্র (Venus) | পরিচ্ছন্ন সুগন্ধি পোশাক পরিধান; দরিদ্র নারীদের সাদা মিষ্টি দান। *(Wear clean, fragrant clothes; donate white sweets)* | ধনলাভ, দাম্পত্য সুখ ও সামাজিক আকর্ষণ বৃদ্ধি পায়। |
+| **শনিবার (Saturday)** | শনি ও রাহু | কালো কুকুরকে রুটি দান; সরিষার তেলের প্রদীপ জ্বালানো; ঘর থেকে বর্জ্য দূর। *(Feed stray dogs; light mustard oil lamp)* | কর্মক্ষেত্রের বাধা, বিলম্ব এবং আকস্মিক দুর্যোগ দূর হয়। |
+| **রবিবার (Sunday)** | সূর্য (Sun) | সকালে তামার পাত্রে সূর্যকে জল অর্পণ; পিতাকে ভক্তিভরে প্রণাম। *(Offer water to rising Sun from copper vessel; honor father)* | তেজ, সমাজে সম্মান, আত্মবিশ্বাস ও জীবনীশক্তি বৃদ্ধি পায়। |
+""", unsafe_allow_html=True)
+
 with tab4:
-    st.markdown("### 📜 বৃহৎ পরাশর হোরা শাস্ত্র (BPHS) ভাবাধিপতি বিচার")
-    
-    # 10th Lord Analysis (Karma Bhava)
-    h10_idx = (lagna_idx + 9) % 12
-    h10_lord = RASHIS[h10_idx]["lord"]
-    h10_lord_h = p_house_map.get(h10_lord, 1)
+    st.markdown("### 📊 গ্রহের স্পষ্ট দ্রাঘিমাংশ ও বিংশোত্তরী মহাদশা")
+    st.dataframe(p_details, use_container_width=True)
 
-    # 7th Lord Analysis (Jaya Bhava)
-    h7_idx = (lagna_idx + 6) % 12
-    h7_lord = RASHIS[h7_idx]["lord"]
-    h7_lord_h = p_house_map.get(h7_lord, 1)
-
-    st.markdown(f"""
-    <div class="card">
-        <h4 style="color:#f4c66a;margin:0 0 6px 0;">💼 কর্ম ও বৃত্তি: দশমেশ বিচার (BPHS অধ্যায় ২৪, শ্লোক ১০)</h4>
-        আপনার দশম ভাব (কর্ম) হলো <b>{RASHIS[h10_idx]['bn']}</b>, যার পতি <b>{h10_lord}</b> বসে আছেন <b>{h10_lord_h}ম ভাবে</b>।<br>
-        • <i>শ্লোক নিয়ম:</i> দশমেশ যদি কেন্দ্রে (১, ৪, ৭, ১০) বা ত্রিকোণে (৫, ৯) থাকেন, তবে জাতক স্বীয় কর্মে যশস্বী ও প্রভাবশালী হন।<br>
-        • বর্তমান অবস্থান ({h10_lord} in House {h10_lord_h}): কর্মক্ষেত্রে নিজস্ব বুদ্ধিমত্তা ও যোগাযোগের ওপর ভিত্তি করে প্রতিষ্ঠা লাভ।<br>
-        <span class="source-tag">সূত্র: বৃহৎ পরাশর হোরা শাস্ত্র (কর্মভাব ফল)</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="card">
-        <h4 style="color:#f4c66a;margin:0 0 6px 0;">💍 দাম্পত্য ও অংশীদারি: সপ্তমেস বিচার (BPHS অধ্যায় ২১, শ্লোক ৭)</h4>
-        আপনার সপ্তম ভাব (পত্নী/পতি ভাব) হলো <b>{RASHIS[h7_idx]['bn']}</b>, অধিপতি <b>{h7_lord}</b> অবস্থান করছেন <b>{h7_lord_h}ম ভাবে</b>।<br>
-        • <i>শ্লোক নিয়ম:</i> সপ্তমাধিপতি দ্বিতীয় বা একাদশ ভাবের সাথে সম্পর্কযুক্ত হলে বিবাহের পর বিশেষ ভাগ্যোদয় হয়।<br>
-        • যদি রাহু বা মঙ্গলের পাপদৃষ্টি থাকে, তবে বাক্য সংযম ও পারস্পরিক বিশ্বাস বজায় রাখা অপরিহার্য।<br>
-        <span class="source-tag">সূত্র: বৃহৎ পরাশর হোরা শাস্ত্র (জায়া ভাব ফল)</span>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("#### ⏳ বিংশোত্তরী মহাদশা কাল (Vimshottari Dasha Sequence)")
+    st.caption("চন্দ্র নক্ষত্রের ভুক্তির ওপর ভিত্তি করে শতবর্ষীয় মহাদশা হিসাব:")
+    col_d1, col_d2 = st.columns(2)
+    for idx, (lord, span) in enumerate(dasha_timeline):
+        t_col = col_d1 if idx < 5 else col_d2
+        with t_col:
+            st.markdown(f"""
+            <div class="card" style="padding:10px; margin-bottom:8px;">
+                <b>{lord} মহাদশা:</b> <span class="highlight-gold">{span}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
 with tab5:
-    st.markdown("### ⚖️ সিদ্ধান্ত শাস্ত্রীয় যোগ ও পঞ্জিকা সম্মত প্রতিকার")
-
+    st.markdown("### ⚖️ শাস্ত্রীয় শুভ যোগ ও দোষ বিচার")
+    
     mars_h = p_house_map.get("Mangala", 0)
     is_manglik = mars_h in [1, 4, 7, 8, 12]
 
@@ -416,17 +601,17 @@ with tab5:
 
     st.markdown(f"""
     <div class="card">
-        <b>শাস্ত্রীয় শুভ যোগসমূহ (Classical Yogas):</b><br><br>
-        {"<span class='highlight-gold'>• গজকেশরী যোগ (Gajakesari Yoga):</span> বৃহস্পতি ও চন্দ্র পরস্পর কেন্দ্রবর্তী। ফল: দীর্ঘায়ু, শাস্ত্রজ্ঞান, সমাজমান ও ধর্মপরায়ণতা। [সূত্র: বৃহৎ জাতক, বরাহমিহির]<br><br>" if is_gajakesari else ""}
-        {"<span class='highlight-gold'>• বুধাদিত্য যোগ (Budhaditya Yoga):</span> রবি ও বুধের একরাশিস্থ সংযোগ। ফল: তীক্ষ্ণ মেধা, হিসাববিদ্যায় পারদর্শিতা ও প্রশাসনিক ক্ষমতা। [সূত্র: সারাাবলী]<br><br>" if is_budhaditya else ""}
-        <span class='highlight-gold'>• কেন্দ্র-ত্রিকোণ রাজযোগ (Dharma-Karmadhipati Yoga):</span> কেন্দ্র ও ত্রিকোণ অধিপতিদের সামঞ্জস্যপূর্ণ সংস্থান। [সূত্র: BPHS Ch. 34]
+        <h4 style="color:#f4c66a;margin:0 0 6px 0;">চিহ্নিত শুভ যোগসমূহ (Auspicious Yogas)</h4>
+        {"<span class='badge'>গজকেশরী যোগ (Gajakesari)</span> বৃহস্পতি ও চন্দ্র কেন্দ্রবর্তী। গভীর প্রজ্ঞা, দীর্ঘায়ু ও সমাজমান লাভ হয়।<br><br>" if is_gajakesari else ""}
+        {"<span class='badge'>বুধাদিত্য যোগ (Budhaditya)</span> রবি ও বুধের যুগল অবস্থান। তীক্ষ্ণ মেধা, হিসাববিদ্যায় পারদর্শিতা ও প্রশাসনিক ক্ষমতা।<br><br>" if is_budhaditya else ""}
+        <span class='badge'>লগ্ন-কেন্দ্র শুভত্ব</span> লগ্ন ও ত্রিকোণাধিপতির শুভ সামঞ্জস্য।
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="card">
-        <b>দোষ নিরূপণ ও সমাধান (Dosha Scan per Panjika):</b><br><br>
-        <b>ভৌম দোষ / মাঙ্গলিক বিচার:</b> {"⚠️ লগ্ন, ৪র্থ, ৭ম, ৮ম বা ১২শ ভাবে মঙ্গল স্থিত (" + str(mars_h) + "ম ভাব)। ২৮ বছর বয়সের পর মঙ্গলের তেজস্বিতা প্রশমিত হয়। নিত্য হনুমান চালীসা পাঠ শাস্ত্রীয় প্রতিকার।" if is_manglik else "✅ মাঙ্গলিক দোষ মুক্ত (মঙ্গল শুভ স্থানে অবস্থিত)।"}<br><br>
-        <b>কেমদ্রুম যোগ বিচার:</b> {"⚠️ চন্দ্রের উভয় পার্শ্বে গ্রহহীনতা দেখা দিলে মানসিক উদ্বেগ বাড়ে। শিবোপাসনা ও প্রত্যহ সকালে সূর্য প্রণাম দ্বারা এই দোষ খণ্ডন হয়।" if len(occupants.get((moon_h % 12) + 1, [])) == 0 and len(occupants.get(((moon_h - 2) % 12) + 1, [])) == 0 else "✅ কেমদ্রুম ভঙ্গ যোগ বা নিরাপদ চন্দ্রবল।"}
+        <h4 style="color:#f4c66a;margin:0 0 6px 0;">দোষ নিরূপণ ও সমাধান (Dosha Scan)</h4>
+        <b>ভৌম দোষ / মাঙ্গলিক বিচার:</b> {"⚠️ লগ্ন, ৪র্থ, ৭ম, ৮ম বা ১২শ ভাবে মঙ্গল অবস্থিত (" + str(mars_h) + "ম ভাব)। ২৮ বছর বয়সের পর এর তেজ প্রশমিত হয়। হনুমান চালীসা পাঠ ও রাগ দমন প্রধান প্রতিকার।" if is_manglik else "✅ মাঙ্গলিক দোষ মুক্ত। মঙ্গল শুভ স্থানে স্থিত।"}<br><br>
+        <b>কেমদ্রুম দোষ বিচার:</b> {"⚠️ চন্দ্রের উভয় পার্শ্বস্থ ঘর গ্রহহীন হলে একাকীত্ব বা দুশ্চিন্তা দেখা দিতে পারে। শিবপূজা ও সোমবারে দুধ অর্পণ দ্বারা দোষ খণ্ডন হয়।" if len(occupants.get((moon_h % 12) + 1, [])) == 0 and len(occupants.get(((moon_h - 2) % 12) + 1, [])) == 0 else "✅ কেমদ্রুম ভঙ্গ যোগ বা নিরাপদ চন্দ্রবল।"}
     </div>
     """, unsafe_allow_html=True)
